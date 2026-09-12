@@ -135,17 +135,17 @@ export const CameraMoodModal: React.FC<CameraMoodModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 relative animate-scale-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 relative animate-scale-up">
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div className="bg-slate-900 text-white px-5 py-3.5 sm:px-6 sm:py-4 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-2.5">
             <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              <Camera className="w-5 h-5 animate-pulse" />
+              <Camera className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Detect Your Mood</h3>
-              <p className="text-xs text-slate-400">Gemini Vision facial expression signal</p>
+              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Detect Your Mood</h3>
+              <p className="text-[11px] text-slate-400">Gemini Vision facial expression signal</p>
             </div>
           </div>
 
@@ -161,7 +161,7 @@ export const CameraMoodModal: React.FC<CameraMoodModalProps> = ({
         </div>
 
         {/* Modal Content */}
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* Privacy Disclaimer */}
           <div className="flex items-center gap-2 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -172,7 +172,7 @@ export const CameraMoodModal: React.FC<CameraMoodModalProps> = ({
 
           {/* Camera Error or Manual Switch */}
           {cameraError || showManualSelection ? (
-            <div className="space-y-4 text-center py-4">
+            <div className="space-y-4 text-center py-2">
               <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
                 <Smile className="w-6 h-6" />
               </div>
@@ -183,7 +183,7 @@ export const CameraMoodModal: React.FC<CameraMoodModalProps> = ({
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-left pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left pt-2">
                 {MANUAL_MOODS.map((m) => (
                   <button
                     key={m.value}
@@ -219,7 +219,7 @@ export const CameraMoodModal: React.FC<CameraMoodModalProps> = ({
           ) : (
             <>
               {/* Camera Preview Box */}
-              <div className="relative aspect-video w-full rounded-2xl bg-slate-900 overflow-hidden border border-slate-300 shadow-inner flex items-center justify-center">
+              <div className="relative aspect-video w-full rounded-2xl bg-slate-900 overflow-hidden border border-slate-300 shadow-inner flex items-center justify-center min-h-[200px]">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -233,18 +233,18 @@ export const CameraMoodModal: React.FC<CameraMoodModalProps> = ({
 
                 {/* Analysis Result Preview Overlay */}
                 {capturedAnalysis && (
-                  <div className="p-6 text-center space-y-3 bg-slate-900/90 text-white w-full h-full flex flex-col justify-center items-center">
-                    <span className="text-4xl animate-bounce">
+                  <div className="p-4 sm:p-6 text-center space-y-2.5 bg-slate-900/95 text-white w-full h-full flex flex-col justify-center items-center">
+                    <span className="text-3xl sm:text-4xl animate-bounce">
                       {EMOJI_MAP[capturedAnalysis.expression] || '😊'}
                     </span>
                     <div>
-                      <span className="text-xs uppercase font-extrabold tracking-widest text-emerald-400 block">
+                      <span className="text-[10px] uppercase font-extrabold tracking-widest text-emerald-400 block">
                         Gemini Expression Analysis
                       </span>
-                      <h4 className="text-2xl font-black text-white">
+                      <h4 className="text-xl sm:text-2xl font-black text-white">
                         Detected: {capturedAnalysis.expression}
                       </h4>
-                      <p className="text-xs text-slate-300 mt-1">
+                      <p className="text-[11px] text-slate-300 mt-1">
                         Confidence: {(capturedAnalysis.confidence * 100).toFixed(0)}% • {capturedAnalysis.description}
                       </p>
                     </div>
@@ -254,19 +254,19 @@ export const CameraMoodModal: React.FC<CameraMoodModalProps> = ({
                 {/* Loading Spinner */}
                 {isAnalyzing && (
                   <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center text-white space-y-2 z-20">
-                    <Sparkles className="w-8 h-8 text-emerald-400 animate-spin" />
-                    <span className="text-xs font-bold">Gemini Vision is analyzing expression...</span>
+                    <Sparkles className="w-7 h-7 text-emerald-400 animate-spin" />
+                    <span className="text-xs font-bold">Gemini Vision analyzing expression...</span>
                   </div>
                 )}
               </div>
 
               {/* Action Buttons */}
               {!capturedAnalysis ? (
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
                   <button
                     onClick={handleCaptureAndAnalyze}
                     disabled={isAnalyzing || !isCameraActive}
-                    className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                    className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
                   >
                     <Camera className="w-4 h-4" />
                     <span>Detect Mood</span>
@@ -274,7 +274,7 @@ export const CameraMoodModal: React.FC<CameraMoodModalProps> = ({
 
                   <button
                     onClick={() => setShowManualSelection(true)}
-                    className="py-3 px-4 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200"
+                    className="w-full sm:w-auto py-3 px-4 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200"
                   >
                     Choose Manually
                   </button>
@@ -284,7 +284,7 @@ export const CameraMoodModal: React.FC<CameraMoodModalProps> = ({
                   <span className="text-xs font-bold text-slate-700 text-center block">
                     Use this mood for recommendations?
                   </span>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <button
                       onClick={handleConfirmUse}
                       className="py-3 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-1"
