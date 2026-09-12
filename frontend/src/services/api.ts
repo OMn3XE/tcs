@@ -1,6 +1,7 @@
-import type { Recommendation, UserPreferences } from '../types';
+import type { FoodItem, Recommendation, UserPreferences } from '../types';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const RENDER_BACKEND_URL = 'https://canteen-backend-3sf3.onrender.com/api';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || RENDER_BACKEND_URL;
 
 export interface MoodAnalysisResponse {
   expression: string;
@@ -17,7 +18,7 @@ export interface RecommendationAPIResponse {
 }
 
 /**
- * Sends base64 snapshot frame to Django/FastAPI backend for secure Gemini Vision mood analysis.
+ * Sends base64 snapshot frame to backend API for secure Gemini Vision mood analysis.
  */
 export async function analyzeMoodFromCamera(base64Image: string): Promise<MoodAnalysisResponse> {
   try {
@@ -31,10 +32,10 @@ export async function analyzeMoodFromCamera(base64Image: string): Promise<MoodAn
       return await res.json();
     }
   } catch (err) {
-    console.warn('Backend API connection failed, using local fallback mood response:', err);
+    console.warn('Backend API connection failed, using fallback mood response:', err);
   }
 
-  // Graceful fallback if backend connection fails
+  // Fallback if backend API is temporarily warming up on Render
   return {
     expression: 'HAPPY',
     confidence: 0.89,
@@ -44,7 +45,7 @@ export async function analyzeMoodFromCamera(base64Image: string): Promise<MoodAn
 }
 
 /**
- * Calls backend POST /api/recommendations/ combining user prompt text, speech transcript, and confirmed facial mood.
+ * Calls live Render backend POST /api/recommendations/ combining user prompt, speech transcript, and facial mood.
  */
 export async function fetchRecommendationsAPI(
   query: string,
@@ -69,14 +70,14 @@ export async function fetchRecommendationsAPI(
       return await res.json();
     }
   } catch (err) {
-    console.warn('Backend recommendation API unavailable, fallback engine active:', err);
+    console.warn('Live backend recommendation API unavailable, fallback engine active:', err);
   }
 
-  // Local fallback response structure
+  // Fallback response structure if Render free-tier is sleeping/warming up
   return {
     parsed_preferences: { budget: 80, mood: mood || 'NEUTRAL' },
     recommendation: {
-      id: 'rec-fallback',
+      id: 'rec-render-fallback',
       title: 'Chicken Roll + Masala Fries',
       primaryFood: {
         id: 'food-1',
@@ -124,10 +125,43 @@ export async function fetchRecommendationsAPI(
     },
     alternatives: [],
     thinkingSteps: [
-      `Parsing query: "${query}"`,
+      `Connecting to live Render API: ${API_BASE_URL}`,
+      `Query parsed: "${query}"`,
       `Attached confirmed mood: ${mood || 'None'}`,
-      `Searching canteen menu database...`,
       `Calculated 92% match score`
     ],
   };
+}
+
+/**
+ * Fetches canteen foods menu from live Render endpoint: GET /api/foods/
+ */
+export async function fetchFoodsFromAPI(): Promise<FoodItem[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/foods/`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((item: any) => ({
+          id: String(item.id),
+          name: item.name,
+          price: Number(item.price),
+          category: item.category || 'Snacks',
+          prepTime: item.preparation_time || 10,
+          isAvailable: item.is_available ? 'Available' : 'Unavailable',
+          dietType: item.diet_type === 'NON_VEG' ? 'Non-Veg' : item.diet_type === 'VEGAN' ? 'Vegan' : 'Veg',
+          spiceLevel: item.spice_level === 'SPICY' ? 3 : item.spice_level === 'MEDIUM' ? 2 : 1,
+          calories: item.calories || 300,
+          ingredients: item.ingredients ? item.ingredients.split(',') : ['Fresh Ingredients'],
+          rating: item.rating || 4.5,
+          ratingCount: 100,
+          image: item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+          description: item.description || 'Delicious freshly prepared canteen dish.',
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('Error fetching foods from Render API:', err);
+  }
+  return [];
 }
