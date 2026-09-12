@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { User, SlidersHorizontal, Check, Save, Building } from 'lucide-react';
+import { User, SlidersHorizontal, Check, Save, Building, LogOut, LogIn, ShieldCheck } from 'lucide-react';
 import type { UserPreferences, DietType } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface ProfilePageProps {
   userPrefs: UserPreferences;
   onSavePreferences: (updated: UserPreferences) => void;
+  onOpenAuthModal?: () => void;
 }
 
-export const ProfilePage: React.FC<ProfilePageProps> = ({ userPrefs, onSavePreferences }) => {
+export const ProfilePage: React.FC<ProfilePageProps> = ({ userPrefs, onSavePreferences, onOpenAuthModal }) => {
+  const { user, isAuthenticated, logout } = useAuth();
   const [formData, setFormData] = useState<UserPreferences>({ ...userPrefs });
   const [isSaved, setIsSaved] = useState(false);
 
@@ -53,13 +56,32 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ userPrefs, onSavePrefe
     <div className="space-y-8 animate-fade-in pb-16 max-w-4xl">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <User className="w-6 h-6 text-emerald-600" />
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Student Profile & AI Preferences
-          </h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 mb-1">
+            <User className="w-6 h-6 text-emerald-600" />
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Student Profile & AI Preferences
+            </h1>
+          </div>
+          {isAuthenticated ? (
+            <button
+              onClick={logout}
+              className="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center gap-1.5 border border-rose-200 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Log Out</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onOpenAuthModal && onOpenAuthModal()}
+              className="py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
-        <p className="text-sm text-slate-500 font-medium">
+        <p className="text-sm text-slate-500 font-medium mt-1">
           Configure your food preferences, dietary rules and budget limits for personalized recommendations.
         </p>
       </div>
@@ -67,12 +89,17 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ userPrefs, onSavePrefe
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Profile Card */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col sm:flex-row items-center gap-6">
-          <img
-            src={formData.avatar}
-            alt={formData.studentName}
-            className="w-20 h-20 rounded-full object-cover border-2 border-emerald-500 p-0.5 shadow-md shrink-0"
-          />
+          <div className="w-20 h-20 rounded-full bg-emerald-600 text-white font-black text-2xl flex items-center justify-center border-2 border-emerald-500 shadow-md shrink-0">
+            {isAuthenticated && user ? user.username.charAt(0).toUpperCase() : 'S'}
+          </div>
           <div className="flex-1 text-center sm:text-left space-y-3">
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2 bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold w-fit mb-1 border border-emerald-200">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Verified Account: @{user.username}</span>
+              </div>
+            ) : null}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
@@ -80,7 +107,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ userPrefs, onSavePrefe
                 </label>
                 <input
                   type="text"
-                  value={formData.studentName}
+                  value={isAuthenticated && user ? user.username : formData.studentName}
                   onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
                   className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:border-emerald-500"
                 />

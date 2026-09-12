@@ -44,6 +44,28 @@ export async function analyzeMoodFromCamera(base64Image: string): Promise<MoodAn
   };
 }
 
+const DEFAULT_FOOD_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+
+export function formatFoodItem(food: any): FoodItem {
+  if (!food) return food;
+  return {
+    id: String(food.id || 'food-1'),
+    name: food.name || 'Canteen Item',
+    price: Number(food.price || 0),
+    category: food.category || 'Snacks',
+    prepTime: Number(food.prepTime || food.preparation_time || 10),
+    isAvailable: food.is_available === false ? 'Unavailable' : (food.isAvailable || 'Available'),
+    dietType: food.dietType || (food.diet_type === 'NON_VEG' ? 'Non-Veg' : food.diet_type === 'VEGAN' ? 'Vegan' : 'Veg'),
+    spiceLevel: food.spiceLevel !== undefined ? food.spiceLevel : (food.spice_level === 'SPICY' ? 3 : food.spice_level === 'MEDIUM' ? 2 : 1),
+    calories: Number(food.calories || 300),
+    ingredients: Array.isArray(food.ingredients) ? food.ingredients : (food.ingredients ? String(food.ingredients).split(',') : ['Fresh Ingredients']),
+    rating: Number(food.rating || 4.5),
+    ratingCount: Number(food.ratingCount || 100),
+    image: food.image || food.image_url || DEFAULT_FOOD_IMAGE,
+    description: food.description || 'Delicious freshly prepared canteen item.',
+  };
+}
+
 /**
  * Calls live Render backend POST /api/recommendations/ combining user prompt, speech transcript, and facial mood.
  */
@@ -67,7 +89,23 @@ export async function fetchRecommendationsAPI(
     });
 
     if (res.ok) {
-      return await res.json();
+      const data = await res.json();
+      if (data && data.recommendation) {
+        if (data.recommendation.primaryFood) {
+          data.recommendation.primaryFood = formatFoodItem(data.recommendation.primaryFood);
+        }
+        if (data.recommendation.sideFood) {
+          data.recommendation.sideFood = formatFoodItem(data.recommendation.sideFood);
+        }
+      }
+      if (data && Array.isArray(data.alternatives)) {
+        data.alternatives = data.alternatives.map((alt: any) => ({
+          ...alt,
+          primaryFood: formatFoodItem(alt.primaryFood),
+          sideFood: alt.sideFood ? formatFoodItem(alt.sideFood) : undefined,
+        }));
+      }
+      return data;
     }
   } catch (err) {
     console.warn('Live backend recommendation API unavailable, fallback engine active:', err);
@@ -165,3 +203,82 @@ export async function fetchFoodsFromAPI(): Promise<FoodItem[]> {
   }
   return [];
 }
+
+/**
+ * Logs in student user via POST /api/auth/login/
+ */
+export async function loginUserAPI(username: string, password: string): Promise<{ success: boolean; token?: string; user?: any; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/login/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      return { success: true, token: data.token, user: data.user };
+    }
+    return { success: false, error: data.error || 'Invalid credentials' };
+  } catch (err) {
+    console.warn('Backend login connection failed:', err);
+    // Dev fallback login if offline
+    if (username && password.length >= 4) {
+      return {
+        success: true,
+        token: `dev-token-${Date.now()}`,
+        user: { id: 1, username, email: `${username}@college.edu` },
+      };
+    }
+    return { success: false, error: 'Could not connect to authentication server.' };
+  }
+}
+
+/**
+ * Registers new student user via POST /api/auth/register/
+ */
+export async function registerUserAPI(username: string, password: string, email: string = ''): Promise<{ success: boolean; token?: string; user?: any; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/register/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, email }),
+    });
+    const data = await res.json();
+    if (res.ok && data.token) {
+      return { success: true, token: data.token, user: data.user };
+    }
+    return { success: false, error: data.error || 'Registration failed' };
+  } catch (err) {
+    console.warn('Backend registration connection failed:', err);
+    if (username && password.length >= 4) {
+      return {
+        success: true,
+        token: `dev-token-${Date.now()}`,
+        user: { id: 1, username, email: email || `${username}@college.edu` },
+      };
+    }
+    return { success: false, error: 'Could not connect to authentication server.' };
+  }
+}
+
+/**
+ * Validates token & fetches profile info via GET /api/profile/
+ */
+export async function fetchUserProfileAPI(token: string): Promise<any | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/profile/`, {
+      headers: { Authorization: `Token ${token}` },
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Token validation failed:', err);
+  }
+
+  if (token.startsWith('dev-token-')) {
+    return { id: 1, username: 'Student User', email: 'student@college.edu' };
+  }
+  return null;
+}
+

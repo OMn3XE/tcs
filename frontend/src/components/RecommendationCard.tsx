@@ -62,8 +62,11 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
               <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
                 <div className="flex items-center gap-3">
                   <img
-                    src={recommendation.primaryFood.image}
+                    src={recommendation.primaryFood.image || (recommendation.primaryFood as any).image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'}
                     alt={recommendation.primaryFood.name}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+                    }}
                     className="w-12 h-12 rounded-lg object-cover border border-slate-200"
                   />
                   <div>
@@ -71,7 +74,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
                       {recommendation.primaryFood.name}
                     </h4>
                     <span className="text-xs text-slate-500">
-                      {recommendation.primaryFood.category} • {recommendation.primaryFood.prepTime} min
+                      {recommendation.primaryFood.category || 'Canteen'} • {recommendation.primaryFood.prepTime || (recommendation.primaryFood as any).preparation_time || 10} min
                     </span>
                   </div>
                 </div>
@@ -87,8 +90,11 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
                 <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center gap-3">
                     <img
-                      src={recommendation.sideFood.image}
+                      src={recommendation.sideFood.image || (recommendation.sideFood as any).image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'}
                       alt={recommendation.sideFood.name}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+                      }}
                       className="w-12 h-12 rounded-lg object-cover border border-slate-200"
                     />
                     <div>
@@ -99,7 +105,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
                         </h4>
                       </div>
                       <span className="text-xs text-slate-500">
-                        {recommendation.sideFood.category} • {recommendation.sideFood.prepTime} min
+                        {recommendation.sideFood.category || 'Canteen'} • {recommendation.sideFood.prepTime || (recommendation.sideFood as any).preparation_time || 10} min
                       </span>
                     </div>
                   </div>

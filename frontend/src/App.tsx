@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MobileNav } from './components/MobileNav';
 import { FoodDetailModal } from './components/FoodDetailModal';
+import { AuthModal } from './components/AuthModal';
+import { AuthProvider } from './context/AuthContext';
 import { Dashboard } from './pages/Dashboard';
 import { RecommendationsPage } from './pages/Recommendations';
 import { MenuPage } from './pages/Menu';
@@ -17,9 +19,10 @@ import {
 } from './data/mockData';
 import type { FoodItem, Recommendation, UserPreferences, HistoryItem } from './types';
 
-export function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
   const [userPrefs, setUserPrefs] = useState<UserPreferences>(INITIAL_USER_PREFERENCES);
   const [foodItems, setFoodItems] = useState<FoodItem[]>(INITIAL_FOOD_ITEMS);
@@ -100,6 +103,7 @@ export function App() {
         userPrefs={userPrefs}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -168,6 +172,7 @@ export function App() {
             <ProfilePage
               userPrefs={userPrefs}
               onSavePreferences={handleSavePreferences}
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
             />
           )}
         </div>
@@ -186,8 +191,23 @@ export function App() {
           setActiveTab('dashboard');
         }}
       />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 }
 
+export function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
 export default App;
+

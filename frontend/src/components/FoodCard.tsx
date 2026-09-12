@@ -33,8 +33,11 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSelect, onToggleFavo
       {/* Image Container */}
       <div className="relative h-44 w-full overflow-hidden bg-slate-100">
         <img
-          src={food.image}
+          src={food.image || (food as any).image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80'}
           alt={food.name}
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+          }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
 
